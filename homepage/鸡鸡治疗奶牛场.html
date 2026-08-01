@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root {
+      color-scheme: light;
+      --nl-page: #f4f7f5;
+      --nl-surface: #ffffff;
+      --nl-ink: #202a26;
+      --nl-muted: #65736c;
+      --nl-primary: #3f6a55;
+      --nl-secondary: #b95e52;
+      --nl-accent: #d8a43b;
+      --nl-pattern: #d8cfd2;
+      --nl-line: rgba(32, 42, 38, .14);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: transparent; }
+    body { color: var(--nl-ink); font: 14px/1.7 system-ui, "Microsoft YaHei", sans-serif; }
+    button, input, select, textarea { font: inherit; letter-spacing: 0; }
+    button { color: inherit; }
+    .nl-home {
+      width: min(100%, 1040px);
+      margin: 10px auto;
+      overflow: hidden;
+      background: var(--nl-page);
+      border: 1px solid var(--nl-line);
+      border-radius: 8px;
+      box-shadow: 0 16px 44px rgba(28, 45, 36, .13);
+    }
+    .nl-topbar { height: 6px; background: var(--nl-primary); }
+    .nl-title-block { position: relative; padding: 38px 24px 30px; text-align: center; background: var(--nl-surface); }
+    .nl-theme-toggle { position: absolute; z-index: 1; top: 16px; right: 18px; display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; color: var(--nl-ink); background: var(--nl-surface); border: 1px solid var(--nl-ink); border-radius: 50%; cursor: pointer; font: 700 17px/1 system-ui, sans-serif; transition: background-color .18s ease, color .18s ease, transform .18s ease; }
+    .nl-theme-toggle:hover { color: var(--nl-primary); transform: translateY(-1px); }
+    .nl-theme-toggle:focus { outline: none; }
+    .nl-theme-toggle:focus-visible { outline: 2px solid var(--nl-primary); outline-offset: 2px; }
+    .nl-kicker { margin: 0 0 8px; color: var(--nl-secondary); font-size: 12px; font-weight: 800; }
+    .nl-title { margin: 0; font-family: Georgia, "Noto Serif SC", "Microsoft YaHei", serif; font-size: 44px; line-height: 1.2; letter-spacing: 0; overflow-wrap: anywhere; }
+    .nl-subtitle { max-width: 680px; margin: 10px auto 0; color: var(--nl-muted); font-size: 15px; white-space: pre-line; }
+    .nl-cover-section { padding: 0 20px 32px; background: var(--nl-surface); }
+    .nl-cover-frame {
+      position: relative;
+      width: min(100%, 460px);
+      aspect-ratio: var(--nl-cover-ratio, 4 / 5);
+      margin: 0 auto;
+      overflow: hidden;
+      background: #dfe7e1;
+      border: 1px solid var(--nl-line);
+      border-radius: 8px;
+      box-shadow: 0 14px 34px rgba(30, 51, 40, .16);
+    }
+    .nl-cover-image { display: block; width: 100%; height: 100%; object-fit: var(--nl-cover-fit, cover); }
+    .nl-cover-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--nl-muted); font-weight: 750; background: #e7eee9; }
+    .nl-cover-caption { width: min(100%, 620px); margin: 12px auto 0; color: var(--nl-muted); text-align: center; }
+    .nl-section { padding: 28px 30px; border-top: 1px solid var(--nl-line); background: var(--nl-surface); }
+    .nl-section:nth-of-type(even) { background: var(--nl-page); }
+    .nl-section-head { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; font-size: 18px; }
+    .nl-section-head::before { content: ""; width: 28px; height: 4px; flex: 0 0 auto; background: var(--nl-accent); border-radius: 2px; }
+    .nl-overview-section[hidden] { display: none; }
+    .nl-overview-body { display: grid; gap: 24px; }
+    .nl-subsection { min-width: 0; }
+    .nl-subsection + .nl-subsection { padding-top: 24px; border-top: 1px dashed var(--nl-line); }
+    .nl-subsection .nl-section-head { margin-bottom: 14px; font-size: 16px; }
+    .nl-character-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+    .nl-character { grid-column: span 2; min-width: 0; overflow: hidden; padding: 0 17px 17px; background: var(--nl-page); border: 1px solid var(--nl-line); border-top: 4px solid var(--tone, var(--nl-primary)); border-radius: 8px; }
+    .nl-character:nth-child(3n + 1):nth-last-child(2) { grid-column: 2 / span 2; }
+    .nl-character:nth-child(3n + 2):last-child { grid-column: 4 / span 2; }
+    .nl-character:nth-child(3n + 1):last-child { grid-column: 3 / span 2; }
+    .nl-character-media { appearance: none; display: block; position: relative; width: calc(100% + 34px); aspect-ratio: var(--nl-character-ratio, 4 / 5); margin: 0 -17px 15px; padding: 0; overflow: hidden; color: inherit; background: #e4ebe6; border: 0; border-bottom: 1px solid var(--nl-line); cursor: default; perspective: 900px; }
+    .nl-character-media.nl-character-media-flippable { cursor: pointer; }
+    .nl-character-media:focus { outline: none; }
+    .nl-character-media:focus-visible { outline: 2px solid var(--tone, var(--nl-primary)); outline-offset: -4px; }
+    .nl-character-image-wrap { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .45s ease; }
+    .nl-character-media.is-flipped .nl-character-image-wrap { transform: rotateY(180deg); }
+    .nl-character-image-face { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden; background: #e4ebe6; }
+    .nl-character-image-face:nth-child(2) { transform: rotateY(180deg); }
+    .nl-character-image { display: block; width: 100%; height: 100%; object-fit: var(--nl-character-fit, cover); }
+    .nl-character-image[hidden] { display: none; }
+    .nl-character-image-empty { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; color: var(--nl-muted); text-align: center; font-size: 12px; font-weight: 750; }
+    .nl-character-outfit-label { position: absolute; right: 8px; bottom: 8px; z-index: 2; max-width: calc(100% - 16px); padding: 3px 8px; color: var(--nl-ink); background: rgba(255, 255, 255, .86); border: 1px solid var(--tone, var(--nl-primary)); border-radius: 999px; font-size: 11px; font-weight: 850; line-height: 1.3; pointer-events: none; }
+    .nl-character-name { margin: 0; font-size: 17px; }
+    .nl-character-role { margin: 3px 0 8px; color: var(--tone, var(--nl-primary)); font-size: 12px; font-weight: 800; }
+    .nl-character-desc { margin: 0; color: var(--nl-muted); }
+    .nl-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .nl-figure { margin: 0; overflow: hidden; background: var(--nl-page); border: 1px solid var(--nl-line); border-radius: 8px; }
+    .nl-figure img, .nl-gallery-empty { display: block; width: 100%; aspect-ratio: var(--nl-gallery-ratio, 4 / 5); object-fit: var(--nl-gallery-fit, cover); }
+    .nl-gallery-empty { display: grid; place-items: center; color: var(--nl-muted); }
+    .nl-figure figcaption { padding: 10px 12px; color: var(--nl-muted); }
+    .nl-facts { border: 1px solid var(--nl-line); border-radius: 8px; overflow: hidden; }
+    .nl-fact { display: grid; grid-template-columns: minmax(110px, .32fr) 1fr; gap: 18px; padding: 13px 15px; background: var(--nl-surface); border-bottom: 1px solid var(--nl-line); }
+    .nl-fact:last-child { border-bottom: 0; }
+    .nl-fact-key { color: var(--nl-primary); font-weight: 800; }
+    .nl-fact-value { min-width: 0; overflow-wrap: anywhere; }
+    .nl-opening-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .nl-opening {
+      appearance: none;
+      min-height: 148px;
+      padding: 17px;
+      text-align: left;
+      background: var(--nl-surface);
+      border: 1px solid var(--nl-line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+    .nl-opening:hover, .nl-opening:focus-visible { border-color: var(--nl-primary); box-shadow: 0 9px 20px rgba(39, 68, 52, .11); transform: translateY(-2px); outline: none; }
+    .nl-opening:disabled { opacity: .58; cursor: wait; transform: none; }
+    .nl-opening-num { color: var(--nl-secondary); font-size: 11px; font-weight: 850; }
+    .nl-opening-title { display: block; margin: 6px 0 4px; font-size: 18px; }
+    .nl-opening-desc { display: block; color: var(--nl-muted); }
+    .nl-custom-opening { border-color: rgba(63, 106, 85, .38); background: #edf3ef; }
+    .nl-status { min-height: 1.7em; margin: 12px 0 0; color: var(--nl-muted); text-align: center; }
+    .nl-persona-section[hidden] { display: none; }
+    .nl-persona-intro { margin: -5px 0 18px; color: var(--nl-muted); }
+    .nl-persona-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; min-height: 0; }
+    .nl-field { display: grid; gap: 6px; min-width: 0; transition: opacity .18s ease; }
+    .nl-field-wide { grid-column: 1 / -1; }
+    .nl-field label { font-weight: 750; }
+    .nl-required { margin-left: 4px; color: var(--nl-secondary); }
+    .nl-input { width: 100%; min-width: 0; padding: 10px 11px; color: var(--nl-ink); background: var(--nl-surface); border: 1px solid var(--nl-line); border-radius: 6px; transition: color .18s ease, background .18s ease, border-color .18s ease; }
+    .nl-input:focus { border-color: var(--nl-primary); outline: 3px solid rgba(63, 106, 85, .14); }
+    textarea.nl-input { min-height: 100px; resize: vertical; }
+    .nl-persona-form.nl-uses-tavern-persona .nl-field { opacity: .42; }
+    .nl-persona-form.nl-uses-tavern-persona .nl-input { color: var(--nl-muted); background: #eee9ea; border-color: #d7ced0; cursor: not-allowed; }
+    .nl-persona-actions { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 3px; flex-wrap: wrap; }
+    .nl-persona-form > .nl-status { grid-column: 1 / -1; width: 100%; }
+    .nl-action { appearance: none; min-height: 42px; padding: 9px 16px; color: #fff; background: var(--nl-primary); border: 1px solid var(--nl-primary); border-radius: 6px; font-weight: 800; cursor: pointer; }
+    .nl-action-secondary { color: var(--nl-primary); background: var(--nl-surface); }
+    .nl-action-secondary[aria-pressed="true"] { color: #fff; background: var(--nl-secondary); border-color: var(--nl-secondary); }
+    .nl-action:disabled { opacity: .58; cursor: wait; }
+    .nl-notice { padding: 10px 13px; color: var(--nl-muted); background: var(--nl-page); border-left: 3px solid var(--nl-accent); }
+    .nl-notice + .nl-notice { margin-top: 8px; }
+    .nl-community { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; color: #fff; background: var(--nl-primary); border-radius: 6px; text-decoration: none; font-weight: 800; }
+    .nl-footer { padding: 20px 24px; color: var(--nl-muted); text-align: center; background: var(--nl-page); border-top: 1px solid var(--nl-line); }
+    .nl-source { display: none !important; }
+    .nl-home[data-style-preset="paper-sticker"] {
+      --nl-line: #e5c8cf;
+      color: var(--nl-ink);
+      background-color: var(--nl-page);
+      background-image:
+        radial-gradient(circle, var(--nl-pattern) 0 4px, transparent 4.5px),
+        radial-gradient(circle, var(--nl-pattern) 0 4px, transparent 4.5px);
+      background-position: 0 0, 36px 36px;
+      background-size: 72px 72px;
+      border: 2px solid var(--nl-ink);
+      border-radius: 10px;
+      box-shadow: 5px 6px 0 var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-topbar {
+      height: 8px;
+      background: var(--nl-primary);
+      border-bottom: 2px solid var(--nl-ink);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-title-block {
+      padding-bottom: 26px;
+      background: rgba(255, 255, 255, .98);
+      border-bottom: 2px dashed var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-kicker {
+      display: inline-flex;
+      margin-bottom: 12px;
+      padding: 3px 10px;
+      color: var(--nl-ink);
+      background: #ffe4e6;
+      border: 1px solid var(--nl-ink);
+      border-radius: 999px;
+      letter-spacing: .08em;
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-title {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      font-weight: 900;
+      letter-spacing: -.03em;
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-cover-section {
+      padding-top: 26px;
+      background: rgba(255, 245, 247, .97);
+      border-bottom: 2px dashed var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-cover-frame {
+      background: #fff5f7;
+      border: 2px solid var(--nl-ink);
+      border-radius: 8px;
+      box-shadow: 5px 5px 0 var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-cover-empty {
+      color: var(--nl-ink);
+      background-color: #fff5f7;
+      background-image:
+        linear-gradient(45deg, transparent 47.5%, rgba(229, 200, 207, .55) 48%, rgba(229, 200, 207, .55) 52%, transparent 52.5%),
+        linear-gradient(-45deg, transparent 47.5%, rgba(229, 200, 207, .55) 48%, rgba(229, 200, 207, .55) 52%, transparent 52.5%);
+      background-size: 30px 30px;
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-section {
+      margin: 12px;
+      padding: 24px;
+      background: rgba(255, 255, 255, .985);
+      border: 2px solid var(--nl-ink);
+      border-radius: 9px;
+      box-shadow: 3px 3px 0 var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-section:nth-of-type(even) {
+      background: rgba(255, 245, 247, .98);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-section-head {
+      padding-bottom: 9px;
+      border-bottom: 2px dashed var(--nl-line);
+      font-weight: 900;
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-section-head::before {
+      content: "♥";
+      width: auto;
+      height: auto;
+      color: var(--nl-primary);
+      background: none;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-character {
+      padding: 0 15px 16px;
+      background: #fff;
+      border: 1px solid var(--nl-ink);
+      border-top: 5px solid var(--tone, var(--nl-primary));
+      border-radius: 8px;
+      box-shadow: 3px 3px 0 var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-character-media {
+      width: calc(100% + 30px);
+      margin-right: -15px;
+      margin-left: -15px;
+      background: #fdfbfb;
+      border-bottom: 1px solid var(--nl-ink);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-character-image-empty {
+      color: var(--nl-ink);
+      background:
+        linear-gradient(135deg, transparent 48%, var(--nl-line) 49%, var(--nl-line) 51%, transparent 52%),
+        #fdfbfb;
+      background-size: 22px 22px;
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-facts {
+      border: 1px solid var(--nl-ink);
+      border-radius: 8px;
+      box-shadow: 3px 3px 0 var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-fact {
+      background: #fff;
+      border-bottom: 1px dashed var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-fact:nth-child(even) { background: #fff5f7; }
+    .nl-home[data-style-preset="paper-sticker"] .nl-opening {
+      background: #fff5f7;
+      border: 1px solid var(--nl-ink);
+      border-left: 5px solid var(--nl-primary);
+      border-radius: 8px;
+      box-shadow: 3px 3px 0 var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-opening:hover,
+    .nl-home[data-style-preset="paper-sticker"] .nl-opening:focus-visible {
+      border-color: var(--nl-primary);
+      box-shadow: 5px 5px 0 var(--nl-line);
+      transform: translate(-2px, -2px);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-input {
+      background: #fff;
+      border: 1px solid var(--nl-ink);
+      border-radius: 7px;
+      box-shadow: 2px 2px 0 var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-input:focus {
+      border-color: var(--nl-ink);
+      outline: 3px solid rgba(255, 133, 161, .25);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-action {
+      color: var(--nl-ink);
+      background: var(--nl-primary);
+      border: 1px solid var(--nl-ink);
+      border-radius: 999px;
+      box-shadow: 2px 2px 0 var(--nl-ink);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-action-secondary { background: #fff; }
+    .nl-home[data-style-preset="paper-sticker"] .nl-preview {
+      background: #fff5f7;
+      border: 1px solid var(--nl-ink);
+      border-left: 5px solid var(--nl-primary);
+      border-radius: 7px;
+      box-shadow: 2px 2px 0 var(--nl-line);
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-status {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      margin-right: auto;
+      margin-left: auto;
+      padding: 4px 10px;
+      background: #fff;
+      border: 1px solid var(--nl-line);
+      border-radius: 999px;
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-persona-form > .nl-status {
+      width: 100%;
+    }
+    .nl-home[data-style-preset="paper-sticker"] .nl-footer {
+      margin-top: 12px;
+      background: rgba(255, 255, 255, .94);
+      border-top: 2px dashed var(--nl-line);
+      font-weight: 700;
+    }
+    .nl-home[data-theme="dark"] { color-scheme: dark; border-color: #eadde1; box-shadow: 5px 6px 0 #0b090a; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] { --nl-line: rgba(246, 238, 241, .14); }
+    .nl-home[data-theme="dark"] .nl-theme-toggle { color: var(--nl-ink); background: #30282b; border-color: #8c7d82; }
+    .nl-home[data-theme="dark"] .nl-theme-toggle:hover { color: var(--nl-accent); }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-title-block,
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-footer { background: rgba(31, 26, 28, .985); }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-kicker { color: var(--nl-ink); background: #3a2e32; border-color: #8c7d82; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-cover-section { background: rgba(43, 31, 35, .985); }
+    .nl-home[data-theme="dark"] .nl-cover-frame,
+    .nl-home[data-theme="dark"] .nl-cover-empty { background-color: #2d2427; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-cover-empty { color: var(--nl-muted); background-color: #2d2427; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-section { background: rgba(31, 26, 28, .99); }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-section:nth-of-type(even) { background: rgba(43, 31, 35, .985); }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-character { background: #282124; border-color: #d8c9ce; border-top-color: var(--tone, var(--nl-primary)); box-shadow: 3px 3px 0 #0d0a0b; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-character-media,
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-character-image-face,
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-character-image-empty { background-color: #30282b; }
+    .nl-home[data-theme="dark"] .nl-character-outfit-label { color: var(--nl-ink); background: rgba(48, 40, 43, .9); }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-facts { border-color: #d8c9ce; box-shadow: 3px 3px 0 #0d0a0b; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-fact,
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-fact:nth-child(even) { background: #282124; }
+    .nl-home[data-theme="dark"] .nl-opening,
+    .nl-home[data-theme="dark"] .nl-custom-opening,
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-opening { background: #2d2226; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-opening { border-color: #d8c9ce; border-left-color: var(--nl-primary); box-shadow: 3px 3px 0 #0d0a0b; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-input { color: var(--nl-ink); background: #30282b; border-color: #8c7d82; box-shadow: 2px 2px 0 #0d0a0b; }
+    .nl-home[data-theme="dark"] .nl-input::placeholder { color: #9e9095; }
+    .nl-home[data-theme="dark"] .nl-persona-form.nl-uses-tavern-persona .nl-input { color: var(--nl-muted); background: #3a3034; border-color: #66575c; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-action { color: #1a1617; border-color: #eadde1; box-shadow: 2px 2px 0 #0d0a0b; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-action-secondary { color: var(--nl-primary); background: #30282b; }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-action-secondary[aria-pressed="true"] { color: #fff; background: var(--nl-secondary); }
+    .nl-home[data-theme="dark"][data-style-preset="paper-sticker"] .nl-status { background: #30282b; border-color: #66575c; }
+    .nl-home[data-theme="dark"] .nl-notice { background: #282124; }
+    @media (max-width: 720px) {
+      .nl-home { margin: 0; border-radius: 0; }
+      .nl-title-block { padding: 30px 48px 24px; }
+      .nl-theme-toggle { top: 12px; right: 12px; }
+      .nl-title { font-size: 28px; }
+      .nl-cover-section { padding: 0 14px 24px; }
+      .nl-cover-frame { width: min(100%, 380px); }
+      .nl-section { padding: 23px 16px; }
+      .nl-character-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; }
+      .nl-opening-grid, .nl-persona-form { grid-template-columns: 1fr; }
+      .nl-character { grid-column: span 6; padding: 0 7px 9px; }
+      .nl-character:nth-child(3n + 1):nth-last-child(2),
+      .nl-character:nth-child(3n + 2):last-child,
+      .nl-character:nth-child(3n + 1):last-child { grid-column: span 6; }
+      .nl-character:nth-child(odd):last-child { grid-column: 4 / span 6; }
+      .nl-character-media { width: calc(100% + 14px); margin: 0 -7px 8px; }
+      .nl-character-image-empty { padding: 6px; font-size: 10px; }
+      .nl-character-outfit-label { right: 5px; bottom: 5px; padding: 2px 6px; font-size: 9px; }
+      .nl-character-name { font-size: 14px; }
+      .nl-character-role { display: -webkit-box; min-height: 26px; margin: 2px 0 5px; overflow: hidden; font-size: 10px; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+      .nl-character-desc { display: -webkit-box; overflow: hidden; font-size: 10px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+      .nl-field-wide, .nl-persona-actions { grid-column: auto; }
+      .nl-fact { grid-template-columns: 1fr; gap: 3px; }
+      .nl-home[data-style-preset="paper-sticker"] { border-radius: 0; box-shadow: none; }
+      .nl-home[data-style-preset="paper-sticker"] .nl-section { margin: 9px; padding: 20px 15px; }
+      .nl-home[data-style-preset="paper-sticker"] .nl-character { padding: 0 7px 9px; }
+      .nl-home[data-style-preset="paper-sticker"] .nl-character-media { width: calc(100% + 14px); margin-right: -7px; margin-left: -7px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .nl-theme-toggle, .nl-opening, .nl-character-image-wrap { transition: none; } }
+  </style>
+</head>
+<body>
+  <main class="nl-home" data-nailong-homepage="v1">
+    <div class="nl-topbar"></div>
+    <header class="nl-title-block">
+      <button class="nl-theme-toggle" type="button" data-theme-toggle="" hidden aria-pressed="false" aria-label="切换到夜间模式" title="切换到夜间模式"><span data-theme-icon="" aria-hidden="true">☾</span></button>
+      <p class="nl-kicker">CHARACTER CARD</p>
+      <h1 class="nl-title"></h1>
+      <p class="nl-subtitle"></p>
+    </header>
+    <section class="nl-cover-section" aria-label="角色卡封面">
+      <div class="nl-cover-frame">
+        <img class="nl-cover-image" alt="">
+        <div class="nl-cover-empty">封面待定</div>
+      </div>
+      <p class="nl-cover-caption"></p>
+    </section>
+    <section class="nl-section nl-overview-section" hidden>
+      <h2 class="nl-section-head nl-overview-title"></h2>
+      <div class="nl-overview-body"></div>
+    </section>
+    <section class="nl-section nl-persona-section" hidden>
+      <h2 class="nl-section-head nl-persona-title"></h2>
+      <p class="nl-persona-intro"></p>
+      <form class="nl-persona-form"></form>
+    </section>
+    <div class="nl-sections"></div>
+    <div class="nl-source" aria-hidden="true">$1</div>
+  </main>
+  <script type="application/json" id="nl-config">{"templateVersion":1,"deliveryMode":"hybrid","openingExperience":"homepage-custom-user","stylePreset":"paper-sticker","title":"鸡鸡治疗奶牛农场","subtitle":"作者 Discord：@wishwithwe｜仅在 Discord 的类脑和 Prism 频道发布；其他地方出现均为盗传，本人不负任何责任。\n\n由养母兼常驻贴身女仆绫乃带你抵达她亲手操办的农场；其余奶牛娘按日轮值日女仆，直接吸奶供饮，与治疗池浸泡一起构成日常。","footerText":"","overviewTitle":"角色卡一览","cover":{"src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/cover.jpg","alt":"鸡鸡治疗奶牛农场角色卡封面","caption":""},"characters":[{"name":"绫乃","role":"养母妈妈 · 女仆总管","description":"黑发偏分侧扫、侧低马尾，红发带是你小时候送的生日礼物。无血缘养母；操办农场，以女仆总管调教日女仆并与你同行；主宅内可穿裸体围裙。","accent":"#E95786","image":{"src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/ayano-cow.jpg","alt":"绫乃角色插图"},"outfits":[{"id":"cow","label":"奶牛装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/ayano-cow.jpg","alt":"绫乃奶牛装角色插图"},{"id":"maid","label":"女仆装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/ayano-maid.jpg","alt":"绫乃女仆装角色插图"}]},{"name":"凉音","role":"田间可靠手 · 日女仆轮值","description":"深蓝短发、蓝瞳、左眼角美人痣的王子系酷假小子；话少站得直，轮值日女仆时护在侧跟随，当日改为直接吸奶供饮——被认真回应后耳尖会红。","accent":"#67A7D8","image":{"src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/liangyin-cow.jpg","alt":"凉音角色插图"},"outfits":[{"id":"cow","label":"奶牛装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/liangyin-cow.jpg","alt":"凉音奶牛装角色插图"},{"id":"maid","label":"女仆装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/liangyin-maid.jpg","alt":"凉音女仆装角色插图"}]},{"name":"真白","role":"挤奶协助 · 日女仆轮值","description":"习惯在不显眼的地方默默完成工作。轮到日女仆时会紧张地跟在半步外，直接吸奶时闭眼发抖，却仍努力把胸送稳。","accent":"#F0A43A","image":{"src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/maibai-cow.jpg","alt":"真白角色插图"},"outfits":[{"id":"cow","label":"奶牛装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/maibai-cow.jpg","alt":"真白奶牛装角色插图"},{"id":"maid","label":"女仆装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/maibai-maid.jpg","alt":"真白女仆装角色插图"}]},{"name":"丽奈","role":"治疗接待 · 日女仆轮值","description":"金发碧眼高马尾、高挑明艳，擅长把治疗与接待安排得体面周到；轮值日女仆时把跟随做成礼仪，直接吸奶也讲究姿势。","accent":"#4E9B79","image":{"src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/lina-cow.jpg","alt":"丽奈角色插图"},"outfits":[{"id":"cow","label":"奶牛装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/lina-cow.jpg","alt":"丽奈奶牛装角色插图"},{"id":"maid","label":"女仆装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/lina-maid.jpg","alt":"丽奈女仆装角色插图"}]},{"name":"月影","role":"冷冻库存 · 日女仆轮值","description":"银白长发、蓝眼、深棕肤色的东亚冷美人。话少脸淡；轮值日女仆时跟得准、少废话，直接吸奶时表情仍淡，事后递水擦嘴。","accent":"#8A6FA0","image":{"src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/yueying-cow.jpg","alt":"月影角色插图"},"outfits":[{"id":"cow","label":"奶牛装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/yueying-cow.jpg","alt":"月影奶牛装角色插图"},{"id":"maid","label":"女仆装","src":"https://gcore.jsdelivr.net/gh/HelloQun54321/dick-cow-treatment-farm-frontend@a2703d4efc8f24a6e74b04ff0ca5a592df8eab8e/images/yueying-maid.jpg","alt":"月影女仆装角色插图"}]}],"sectionLabels":{"characters":"奶牛娘 · 点击图片切换服装","facts":"农场生活","openings":"从哪里开始","notices":"声明与许可"},"imageLayout":{"coverAspectRatio":"13 / 19","characterAspectRatio":"13 / 19","galleryAspectRatio":"13 / 19","coverObjectFit":"contain","characterObjectFit":"contain","galleryObjectFit":"contain"},"theme":{"page":"#FDFBFB","surface":"#FFFFFF","ink":"#1A1617","muted":"#6F6266","primary":"#FF85A1","secondary":"#A94E49","accent":"#EAB308","pattern":"#DED3D6"},"notices":[{"text":"免费与非商业声明：本角色卡永久免费。禁止付费销售、捆绑售卖、收费代发、设置付费门槛或以其他方式直接、间接商业化获利；如通过付费渠道获得，请向交易平台申请退款并举报售卖者。"},{"text":"转载声明：未经作者明确许可，禁止将本卡或其拆分内容转载、镜像、二次发布、上传至其他平台或并入公开资源合集。"},{"text":"修改与署名声明：允许个人本地修改与游玩；修改版不得公开传播、收费或商业化。传播时禁止删除、隐藏、替换或歪曲原有声明与作者署名。"},{"text":"虚构声明：本卡中的人物、地点、事件与疾病机制均为虚构创作，不对应现实人物、机构或医学建议。"}],"gallery":[],"facts":[{"label":"生活节奏","value":"每日一次治疗、轻度经营与五人的相处共同推进。"},{"label":"主要地点","value":"主宅、挤奶房、治疗池与草料田。"},{"label":"关系变化","value":"选择与回应会分别改变五人的关系阶段与亲密记录。"},{"label":"经营循环","value":"草料种植、挤奶产量、母乳库存与治疗安排彼此影响。"}],"openings":[{"swipeId":1,"title":"推开农场木门","description":"由养母绫乃带你来到农场大门，在这里第一次见到凉音和真白。"},{"swipeId":2,"title":"雨中迎接新住户","description":"第1天15:00，雨中的农场大门——丽奈与月影已按约抵达（可跳过上午等待）。"}],"customUserOpening":{"enabled":true,"generationMode":"deferred","title":"自定义人设","description":"可以填写并保存本局自定义人设，也可以选择沿用酒馆当前人设。这里只保存本局的选择，不会发送消息、触发 AI，也不会读取、覆盖或删除酒馆人设。","submitLabel":"保存人设","fields":[{"id":"name","label":"名字","type":"text","required":true,"placeholder":"填写本局希望住户们称呼你的名字","maxLength":40,"options":[]},{"id":"age_group","label":"年龄","type":"text","required":true,"placeholder":"自由填写年龄","maxLength":40,"options":[]},{"id":"appearance","label":"外貌特征","type":"textarea","required":true,"placeholder":"写下会影响住户们第一印象的外貌与穿着","maxLength":400,"options":[]},{"id":"notes","label":"补充设定","type":"textarea","required":false,"placeholder":"自由填写经历、习惯、偏好或其他希望住户们知道的设定","maxLength":800,"options":[]}],"openingTemplate":"","modelPrompt":"请根据玩家人设创作农场正式开场。保持既定世界观与五位角色的人设及当前抵达状态；不要替 {{user}} 说话、决定行动或规定心理活动；设置一个需要 {{user}} 回应的当下事件，并在回应发生前停止。"},"community":{"enabled":false,"label":"相关链接","url":""},"nightTheme":{"page":"#181416","surface":"#1F1A1C","ink":"#F6EEF1","muted":"#BCAEB3","primary":"#FF91AA","secondary":"#E4869B","accent":"#F3AD68","pattern":"#40363A"},"themePreferenceKey":"nailong-farm-status-theme"}</script>
+  <script>
+  (() => {
+    'use strict';
+    const home = document.querySelector('[data-nailong-homepage="v1"]');
+    const cfg = JSON.parse(document.querySelector('#nl-config').textContent);
+    const footer = home.querySelector('.nl-footer');
+    if (footer) footer.textContent = cfg.footerText;
+    const root = home.querySelector('.nl-sections');
+    const overviewSection = home.querySelector('.nl-overview-section');
+    const overviewRoot = home.querySelector('.nl-overview-body');
+    const personaOnly=cfg.openingExperience==='custom-user-opening';
+    const el = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = String(text);
+      return node;
+    };
+    const addSection = (title, target = root, nested = false) => {
+      const section = el('section', nested ? 'nl-subsection' : 'nl-section');
+      section.append(el(nested ? 'h3' : 'h2', 'nl-section-head', title));
+      target.append(section);
+      return section;
+    };
+    const addOverviewSection = title => {
+      if (!cfg.overviewTitle) return addSection(title);
+      overviewSection.hidden = false;
+      return addSection(title, overviewRoot, true);
+    };
+    const themeMap = { page: '--nl-page', surface: '--nl-surface', ink: '--nl-ink', muted: '--nl-muted', primary: '--nl-primary', secondary: '--nl-secondary', accent: '--nl-accent', pattern: '--nl-pattern' };
+    const themeToggle = home.querySelector('[data-theme-toggle]');
+    const themeIcon = home.querySelector('[data-theme-icon]');
+    const themeStorageKey = cfg.themePreferenceKey || 'nailong-homepage-theme';
+    const applyTheme = theme => {
+      const dark = theme === 'dark' && Boolean(cfg.nightTheme);
+      const palette = dark ? cfg.nightTheme : cfg.theme;
+      Object.entries(themeMap).forEach(([key, property]) => home.style.setProperty(property, palette[key]));
+      home.dataset.theme = dark ? 'dark' : 'light';
+      themeToggle.setAttribute('aria-pressed', String(dark));
+      themeToggle.setAttribute('aria-label', dark ? '切换到日间模式' : '切换到夜间模式');
+      themeToggle.title = dark ? '切换到日间模式' : '切换到夜间模式';
+      themeIcon.textContent = dark ? '☀' : '☾';
+    };
+    if (cfg.nightTheme) {
+      themeToggle.hidden = false;
+      let savedTheme = 'light';
+      try {
+        savedTheme = globalThis.localStorage?.getItem(themeStorageKey) === 'dark' ? 'dark' : 'light';
+      } catch (_) {
+        savedTheme = 'light';
+      }
+      applyTheme(savedTheme);
+      themeToggle.addEventListener('click', () => {
+        const theme = home.dataset.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(theme);
+        try {
+          globalThis.localStorage?.setItem(themeStorageKey, theme);
+        } catch (_) {
+          // The current page still switches when storage is unavailable.
+        }
+      });
+    } else {
+      applyTheme('light');
+    }
+    home.dataset.stylePreset = cfg.stylePreset || 'classic';
+    const imageLayout = cfg.imageLayout || {};
+    home.style.setProperty('--nl-cover-ratio', imageLayout.coverAspectRatio || '4 / 5');
+    home.style.setProperty('--nl-character-ratio', imageLayout.characterAspectRatio || '4 / 5');
+    home.style.setProperty('--nl-gallery-ratio', imageLayout.galleryAspectRatio || '4 / 5');
+    home.style.setProperty('--nl-cover-fit', imageLayout.coverObjectFit || 'cover');
+    home.style.setProperty('--nl-character-fit', imageLayout.characterObjectFit || 'cover');
+    home.style.setProperty('--nl-gallery-fit', imageLayout.galleryObjectFit || 'cover');
+    home.querySelector('.nl-title').textContent = cfg.title;
+    home.querySelector('.nl-subtitle').textContent = cfg.subtitle || '';
+    home.querySelector('.nl-overview-title').textContent = cfg.overviewTitle || '';
+    const coverImage = home.querySelector('.nl-cover-image');
+    const coverEmpty = home.querySelector('.nl-cover-empty');
+    const coverCaption = home.querySelector('.nl-cover-caption');
+    if (cfg.cover.src) {
+      // Hide the placeholder before assigning a data/blob URL.  Some browsers
+      // can finish these URLs before a subsequently registered load handler.
+      coverImage.hidden = false;
+      coverEmpty.hidden = true;
+      coverImage.addEventListener('load', () => { coverEmpty.hidden = true; });
+      coverImage.addEventListener('error', () => { coverImage.hidden = true; coverEmpty.hidden = false; });
+      coverImage.src = cfg.cover.src;
+      coverImage.alt = cfg.cover.alt;
+    } else {
+      coverImage.hidden = true;
+    }
+    coverCaption.textContent = cfg.cover.caption || '';
+    coverCaption.hidden = !cfg.cover.caption;
+    if (personaOnly) {
+      home.querySelector('.nl-title-block').hidden = true;
+      home.querySelector('.nl-cover-section').hidden = true;
+    }
+    if (!personaOnly && cfg.characters.length) {
+      const section = addOverviewSection(cfg.sectionLabels.characters);
+      const grid = el('div', 'nl-character-grid');
+      cfg.characters.forEach(character => {
+        const item = el('article', 'nl-character');
+        item.style.setProperty('--tone', character.accent);
+        const outfits = Array.isArray(character.outfits) && character.outfits.length
+          ? character.outfits.slice(0, 2)
+          : [{ label: '默认', src: character.image.src, alt: character.image.alt }];
+        const media = el('button', 'nl-character-media');
+        const wrap = el('span', 'nl-character-image-wrap');
+        const label = el('span', 'nl-character-outfit-label', outfits[0]?.label || '服装');
+        media.type = 'button';
+        media.disabled = outfits.length < 2;
+        media.setAttribute('aria-label', `${character.name}${outfits.length > 1 ? '服装切换' : '插图'}`);
+        if (outfits.length > 1) media.classList.add('nl-character-media-flippable');
+        outfits.forEach((outfit, outfitIndex) => {
+          const face = el('span', 'nl-character-image-face');
+          const image = el('img', 'nl-character-image');
+          const empty = el('span', 'nl-character-image-empty', `${character.name}${outfit.label || ''}`);
+          image.alt = outfit.alt || `${character.name}插图`;
+          image.loading = 'lazy';
+          if (outfit.src) {
+            image.hidden = false;
+            empty.hidden = true;
+            image.addEventListener('load', () => { empty.hidden = true; });
+            image.addEventListener('error', () => { image.hidden = true; empty.hidden = false; });
+            image.src = outfit.src;
+          } else {
+            image.hidden = true;
+          }
+          face.append(image, empty);
+          wrap.append(face);
+          if (outfitIndex === 1) face.setAttribute('aria-hidden', 'true');
+        });
+        let outfitIndex = 0;
+        const setOutfit = nextIndex => {
+          outfitIndex = nextIndex;
+          media.classList.toggle('is-flipped', outfitIndex === 1);
+          label.textContent = outfits[outfitIndex]?.label || '服装';
+          media.setAttribute('aria-label', `${character.name}：${label.textContent}`);
+          [...wrap.children].forEach((face, index) => face.setAttribute('aria-hidden', String(index !== outfitIndex)));
+        };
+        media.addEventListener('click', () => {
+          if (outfits.length < 2) return;
+          setOutfit((outfitIndex + 1) % outfits.length);
+        });
+        media.append(wrap, label);
+        item.append(media, el('h3', 'nl-character-name', character.name), el('p', 'nl-character-role', character.role), el('p', 'nl-character-desc', character.description));
+        grid.append(item);
+      });
+      section.append(grid);
+    }
+    if (!personaOnly && cfg.gallery.length) {
+      const section = addSection('人物与图片');
+      const grid = el('div', 'nl-gallery');
+      cfg.gallery.forEach(item => {
+        const figure = el('figure', 'nl-figure');
+        if (item.src) {
+          const image = el('img');
+          image.src = item.src;
+          image.alt = item.alt || item.name || '';
+          image.loading = 'lazy';
+          image.addEventListener('error', () => image.replaceWith(el('div', 'nl-gallery-empty', '图片暂不可用')));
+          figure.append(image);
+        } else {
+          figure.append(el('div', 'nl-gallery-empty', '图片待定'));
+        }
+        figure.append(el('figcaption', '', item.name || ''));
+        grid.append(figure);
+      });
+      section.append(grid);
+    }
+    if (!personaOnly && cfg.facts.length) {
+      const section = addOverviewSection(cfg.sectionLabels.facts);
+      const facts = el('div', 'nl-facts');
+      cfg.facts.forEach(item => {
+        const row = el('div', 'nl-fact');
+        row.append(el('span', 'nl-fact-key', item.label), el('span', 'nl-fact-value', item.value));
+        facts.append(row);
+      });
+      section.append(facts);
+    }
+    const persona = cfg.customUserOpening;
+    let personaReady = !(persona && persona.enabled && persona.generationMode === 'deferred');
+    const openingButtons = [];
+    let openingStatus = null;
+    const updateOpeningAvailability = message => {
+      openingButtons.forEach(button => { button.disabled = !personaReady; });
+      if (openingStatus && message) openingStatus.textContent = message;
+    };
+    if (!personaOnly && cfg.openings.length) {
+      const section = addSection(cfg.sectionLabels.openings);
+      const grid = el('div', 'nl-opening-grid');
+      cfg.openings.forEach((item, index) => {
+        const button = el('button', 'nl-opening');
+        button.type = 'button';
+        button.disabled = !personaReady;
+        button.append(el('span', 'nl-opening-num', `OPENING · ${String(index + 1).padStart(2, '0')}`), el('strong', 'nl-opening-title', item.title), el('span', 'nl-opening-desc', item.description));
+        button.addEventListener('click', async () => {
+          button.disabled = true;
+          openingStatus.textContent = '正在进入开场……';
+          try {
+            const bridge = globalThis.NailongFrontendBridgeV1;
+            if (!bridge || typeof bridge.selectGreeting !== 'function') throw new Error('当前运行环境不支持开场切换');
+            await bridge.selectGreeting(item.swipeId);
+            openingStatus.textContent = '开场已切换';
+          } catch (error) {
+            openingStatus.textContent = error && error.message ? error.message : '切换失败';
+            button.disabled = false;
+          }
+        });
+        openingButtons.push(button);
+        grid.append(button);
+      });
+      openingStatus = el('p', 'nl-status', personaReady ? '请选择开场' : '请先在上方保存玩家人设');
+      section.append(grid, openingStatus);
+    }
+    if (persona && persona.enabled) {
+      const section = home.querySelector('.nl-persona-section');
+      const form = home.querySelector('.nl-persona-form');
+      home.querySelector('.nl-persona-title').textContent = persona.title;
+      home.querySelector('.nl-persona-intro').textContent = persona.description;
+      const controls = {};
+      persona.fields.forEach(field => {
+        const wrapper = el('div', `nl-field${field.type === 'textarea' ? ' nl-field-wide' : ''}`);
+        const label = el('label', '', field.label);
+        if (field.required) label.append(el('span', 'nl-required', '*'));
+        let input;
+        if (field.type === 'select') {
+          input = el('select', 'nl-input');
+          const empty = el('option', '', '请选择');
+          empty.value = '';
+          input.append(empty);
+          field.options.forEach(option => {
+            const item = el('option', '', option.label);
+            item.value = option.value;
+            input.append(item);
+          });
+        } else {
+          input = el(field.type === 'textarea' ? 'textarea' : 'input', 'nl-input');
+          if (field.type === 'text') input.type = 'text';
+          input.placeholder = field.placeholder || '';
+          input.maxLength = field.maxLength;
+        }
+        input.name = field.id;
+        input.required = field.required;
+        controls[field.id] = input;
+        wrapper.append(label, input);
+        form.append(wrapper);
+      });
+      let useTavernPersona = false;
+      const status = el('p', 'nl-status', '填写并保存自定义人设，或直接使用酒馆当前人设；保存不会发送消息');
+      const actions = el('div', 'nl-persona-actions');
+      const tavernPersonaButton = el('button', 'nl-action nl-action-secondary', '使用酒馆当前人设');
+      const submitButton = el('button', 'nl-action', persona.submitLabel);
+      tavernPersonaButton.type = 'button';
+      tavernPersonaButton.setAttribute('aria-pressed', 'false');
+      submitButton.type = 'submit';
+      actions.append(tavernPersonaButton, submitButton);
+      form.append(actions, status);
+      const values = () => ({
+        ...(persona.generationMode === 'deferred' ? { mode: useTavernPersona ? 'tavern' : 'custom' } : {}),
+        ...Object.fromEntries(persona.fields.map(field => [
+          field.id,
+          useTavernPersona ? '' : String(controls[field.id].value || '').trim()
+        ]))
+      });
+      const summary = data => ['酒馆用户名：{{user}}', ...persona.fields.filter(field => data[field.id]).map(field => `${field.label}：${data[field.id]}`)].join('\n');
+      const fill = (template, data) => Object.entries(data).reduce((text, [key, value]) => text.split(`{{${key}}}`).join(value), String(template || ''));
+      const xmlText = text => String(text).replace(/[&<>]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[character]));
+      const markPersonaDirty = message => {
+        if (persona.generationMode !== 'deferred' || !personaReady) return;
+        personaReady = false;
+        status.textContent = message;
+        updateOpeningAvailability('玩家人设有未保存的改动');
+      };
+      const setPersonaMode = (tavernMode, { markDirty = true } = {}) => {
+        useTavernPersona = Boolean(tavernMode);
+        form.classList.toggle('nl-uses-tavern-persona', useTavernPersona);
+        Object.values(controls).forEach(input => { input.disabled = useTavernPersona; });
+        tavernPersonaButton.setAttribute('aria-pressed', String(useTavernPersona));
+        tavernPersonaButton.textContent = useTavernPersona ? '改用自定义人设' : '使用酒馆当前人设';
+        status.textContent = useTavernPersona
+          ? '将使用酒馆当前人设；这里只记录选择，不会读取、覆盖或删除酒馆人设'
+          : '请填写并保存自定义人设';
+        if (markDirty) markPersonaDirty(useTavernPersona ? '已选择酒馆当前人设，请保存选择' : '已切回自定义人设，请保存设置');
+      };
+      Object.values(controls).forEach(input => input.addEventListener('input', () => {
+        markPersonaDirty('人设已有改动，请重新保存后再选择开场');
+      }));
+      const saveDeferredPersona = async () => {
+        const bridge = globalThis.NailongFrontendBridgeV1;
+        if (!bridge || typeof bridge.savePersona !== 'function') throw new Error('当前运行环境不支持保存玩家人设');
+        await bridge.savePersona(values());
+        const snapshot = await bridge.readSnapshot();
+        const stored = snapshot && snapshot['玩家人设'];
+        const expectedMode = useTavernPersona ? 'tavern' : 'custom';
+        if (!stored || stored.confirmed !== true || stored.mode !== expectedMode) {
+          throw new Error('玩家人设写入后未能回读确认');
+        }
+        personaReady = true;
+        updateOpeningAvailability('玩家人设已保存，请选择开场');
+      };
+      tavernPersonaButton.addEventListener('click', async () => {
+        const nextTavernMode = !useTavernPersona;
+        setPersonaMode(nextTavernMode);
+        if (!nextTavernMode || persona.generationMode !== 'deferred') return;
+        tavernPersonaButton.disabled = true;
+        submitButton.disabled = true;
+        status.textContent = '正在启用酒馆当前人设……';
+        try {
+          await saveDeferredPersona();
+          status.textContent = '已启用酒馆当前人设。请选择开场，然后在聊天输入框主动开始对话';
+        } catch (error) {
+          personaReady = false;
+          status.textContent = error && error.message ? error.message : '启用酒馆当前人设失败';
+          updateOpeningAvailability('玩家人设尚未就绪');
+        } finally {
+          tavernPersonaButton.disabled = false;
+          submitButton.disabled = false;
+        }
+      });
+      section.hidden = false;
+      const hydratePersona = async () => {
+        if (persona.generationMode !== 'deferred') return;
+        try {
+          const bridge = globalThis.NailongFrontendBridgeV1;
+          if (!bridge || typeof bridge.readSnapshot !== 'function') throw new Error('当前运行环境不支持读取玩家人设');
+          await bridge.ready();
+          const snapshot = await bridge.readSnapshot();
+          const stored = snapshot && snapshot['玩家人设'];
+          if (!stored || stored.confirmed !== true) {
+            personaReady = false;
+            updateOpeningAvailability('请先在上方保存玩家人设');
+            return;
+          }
+          persona.fields.forEach(field => {
+            if (stored[field.id] != null) controls[field.id].value = String(stored[field.id]);
+          });
+          setPersonaMode(stored.mode === 'tavern', { markDirty: false });
+          personaReady = true;
+          status.textContent = stored.mode === 'tavern' ? '本局已选择使用酒馆当前人设' : '已读取当前聊天保存的自定义人设';
+          updateOpeningAvailability('玩家人设设置已就绪，请选择开场');
+        } catch (error) {
+          personaReady = false;
+          status.textContent = error && error.message ? error.message : '读取玩家人设失败';
+          updateOpeningAvailability('玩家人设尚未就绪');
+        }
+      };
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!useTavernPersona && !form.reportValidity()) return;
+        tavernPersonaButton.disabled = true;
+        submitButton.disabled = true;
+        status.textContent = persona.generationMode === 'template'
+          ? '正在创建开场……'
+          : persona.generationMode === 'model'
+            ? '正在请求模型生成开场……'
+            : '正在保存人设……';
+        try {
+          const bridge = globalThis.NailongFrontendBridgeV1;
+          if (!bridge) throw new Error('开场桥接尚未就绪');
+          const data = values();
+          if (persona.generationMode === 'deferred') {
+            await saveDeferredPersona();
+          } else if (persona.generationMode === 'template') {
+            if (typeof bridge.createOpeningMessage !== 'function') throw new Error('当前运行环境不支持创建自定义开场');
+            const opening = fill(persona.openingTemplate, data).trim();
+            if (!opening) throw new Error('开场模板生成了空内容');
+            await bridge.createOpeningMessage(opening);
+          } else {
+            if (typeof bridge.sendUserMessage !== 'function') throw new Error('当前运行环境不支持动态生成开场');
+            await bridge.sendUserMessage(`${persona.modelPrompt}\n\n<user_persona>\n${xmlText(summary(data))}\n</user_persona>`);
+          }
+          status.textContent = persona.generationMode === 'deferred'
+            ? useTavernPersona
+              ? '已选择酒馆当前人设。请选择开场，然后在聊天输入框主动开始对话'
+              : '自定义人设已保存。请选择开场，然后在聊天输入框主动开始对话'
+            : '开场已提交';
+          if (persona.generationMode === 'deferred') {
+            tavernPersonaButton.disabled = false;
+            submitButton.disabled = false;
+          }
+        } catch (error) {
+          status.textContent = error && error.message ? error.message : '创建开场失败';
+          tavernPersonaButton.disabled = false;
+          submitButton.disabled = false;
+        }
+      });
+      hydratePersona();
+    }
+    if (!personaOnly && cfg.notices.length) {
+      const section = addSection(cfg.sectionLabels.notices || '说明');
+      cfg.notices.forEach(item => section.append(el('div', 'nl-notice', item.text || item)));
+    }
+    if (!personaOnly && cfg.community && cfg.community.enabled) {
+      const section = addSection('相关链接');
+      const link = el('a', 'nl-community', cfg.community.label || '打开链接');
+      link.href = cfg.community.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      section.append(link);
+    }
+  })();
+  </script>
+</body>
+</html>
