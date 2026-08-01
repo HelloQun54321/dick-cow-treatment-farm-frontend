@@ -478,10 +478,14 @@
     const coverEmpty = home.querySelector('.nl-cover-empty');
     const coverCaption = home.querySelector('.nl-cover-caption');
     if (cfg.cover.src) {
-      coverImage.src = cfg.cover.src;
-      coverImage.alt = cfg.cover.alt;
+      // Hide the placeholder before assigning a data/blob URL.  Some browsers
+      // can finish these URLs before a subsequently registered load handler.
+      coverImage.hidden = false;
+      coverEmpty.hidden = true;
       coverImage.addEventListener('load', () => { coverEmpty.hidden = true; });
       coverImage.addEventListener('error', () => { coverImage.hidden = true; coverEmpty.hidden = false; });
+      coverImage.src = cfg.cover.src;
+      coverImage.alt = cfg.cover.alt;
     } else {
       coverImage.hidden = true;
     }
@@ -514,9 +518,11 @@
           image.alt = outfit.alt || `${character.name}插图`;
           image.loading = 'lazy';
           if (outfit.src) {
-            image.src = outfit.src;
+            image.hidden = false;
+            empty.hidden = true;
             image.addEventListener('load', () => { empty.hidden = true; });
             image.addEventListener('error', () => { image.hidden = true; empty.hidden = false; });
+            image.src = outfit.src;
           } else {
             image.hidden = true;
           }
